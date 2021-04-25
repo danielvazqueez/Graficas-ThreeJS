@@ -184,7 +184,7 @@ const createGalaxy = () => {
     gui.add(parameters, 'randomPower').min(1).max(10).step(0.01).onFinishChange(createGalaxy)
     gui.addColor(parameters, 'insideColor').onFinishChange(createGalaxy)
     gui.addColor(parameters, 'outsideColor').onFinishChange(createGalaxy)
-    
+    gui.hide()
     //Screen
     const sizes = {
     width: window.innerWidth,
