@@ -35,11 +35,13 @@ const specularMap = textureLoader.load('/8081_earthspec4k.jpg')
 const cloudmap = textureLoader.load('/earthcloudmap.jpg')
 const cloudmapt = textureLoader.load('/earthcloudmaptrans.jpg')
 const stars = textureLoader.load('/textures/particles/1.png')
+const moonMap = textureLoader.load('/moonmap4k.jpg')
+const moonBumpMap = textureLoader.load('/moonbump4k.jpg')
 // Lights
 scene.add(new THREE.AmbientLight(0x333333));
 
 var sun = new THREE.DirectionalLight(0xffffff, 1);
-sun.position.set(5,3,5);
+sun.position.set(5,5,3);
 scene.add(sun);
 
 // Music
@@ -55,7 +57,7 @@ const audioLoader = new THREE.AudioLoader();
 audioLoader.load( 'sounds/space-oddity.mp3', ( buffer ) => {
 	sound.setBuffer( buffer );
 	sound.setLoop( true );
-	sound.setVolume( 0.5 );
+	sound.setVolume( 0.3 );
 });
 
 // Earth
@@ -71,6 +73,17 @@ const earth = new THREE.Mesh(
 )
 scene.add(earth)
     
+// Moon
+const moon = new THREE.Mesh(
+    new THREE.SphereBufferGeometry(0.135,32,32),
+    new THREE.MeshPhongMaterial({
+        map: moonMap,
+        bumpMap: moonBumpMap,
+        bumpScale: 0.05,
+    })
+)
+moon.position.set(Math.sin(1), Math.cos(1), -0.66)
+scene.add(moon)
 gui.addColor(parameters, 'color')
     .onChange(() => {
         earth.material.specular.set(parameters.color)
@@ -153,7 +166,7 @@ const createGalaxy = () => {
         const randomY = Math.pow(Math.random(), parameters.randomPower) * (Math.random() < 0.5 ? 1 : -1) * parameters.randomMovement
         const randomZ = Math.pow(Math.random(), parameters.randomPower) * (Math.random() < 0.5 ? 1 : -1) * parameters.randomMovement
         positionsGalaxy[index] = Math.cos(branchAngle + spinAngle) * radius + randomX
-        positionsGalaxy[index + 1] = randomY - 1
+        positionsGalaxy[index + 1] = randomY - 1.5
         positionsGalaxy[index + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ
 
         const mixedColor = insideColorObj.clone()
@@ -245,6 +258,13 @@ const tick = () =>
 
     clouds.rotation.y = elapsedTime * 0.075
     earth.rotation.y = elapsedTime * 0.05
+
+    moon.rotation.y = elapsedTime * 0.15
+    moon.position.x = -1 * Math.cos(elapsedTime * 0.1)
+    moon.position.y = -1 * Math.sin(elapsedTime * 0.1) 
+
+    sun.position.x = 4 * Math.cos(elapsedTime * 0.1)
+    sun.position.y = 4 * Math.sin(elapsedTime * 0.1)
     controls.update()
 
     renderer.render(scene, camera)
