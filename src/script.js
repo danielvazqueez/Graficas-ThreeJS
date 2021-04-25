@@ -13,10 +13,10 @@ const canvas = document.querySelector('canvas.webgl')
 const scene = new THREE.Scene()
 const parameters = {
     'color': 0x646464,
-    'randomStars': 1000, 
-    'size': 0.01,
+    'randomStars': 5000, 
+    'size': 0.02,
     'galaxyRadius': 7,
-    'galaxyStars': 40000,
+    'galaxyStars': 60000,
     'galaxyBranches': 5,
     'spin': 1,
     'randomMovement': 0.20,
