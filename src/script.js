@@ -42,6 +42,21 @@ var sun = new THREE.DirectionalLight(0xffffff, 1);
 sun.position.set(5,3,5);
 scene.add(sun);
 
+// Music
+// The music was extracted from this link: https://www.youtube.com/watch?v=iYYRH4apXDo
+// Only for personal purposes :)
+const listener = new THREE.AudioListener();
+
+// Global audio source
+const sound = new THREE.Audio( listener );
+sound.offset = 5
+sound.autoplay = true
+const audioLoader = new THREE.AudioLoader();
+audioLoader.load( 'sounds/space-oddity.mp3', ( buffer ) => {
+	sound.setBuffer( buffer );
+	sound.setLoop( true );
+	sound.setVolume( 0.5 );
+});
 
 // Earth
 const earth = new THREE.Mesh(
@@ -209,7 +224,7 @@ const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 
 camera.position.z = 1.5
 camera.position.y = 1
 scene.add(camera)
-
+camera.add( listener );
 // Controls
 const controls = new OrbitControls(camera, canvas)
 controls.enableDamping = true
