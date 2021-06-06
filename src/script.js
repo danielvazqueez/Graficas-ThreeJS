@@ -152,6 +152,7 @@ const createGalaxy = () => {
     galaxyStarGeometry = new BufferGeometry()
     const positionsGalaxy = new Float32Array(parameters.galaxyStars * 3)
     const colors = new Float32Array(parameters.galaxyStars * 3)
+    const scales = new Float32Array(parameters.galaxyStars * 1)
 
     const insideColorObj = new THREE.Color(parameters.insideColor)
     const outisdeColorObj = new THREE.Color(parameters.outsideColor)
@@ -174,6 +175,8 @@ const createGalaxy = () => {
         colors[index] = mixedColor.r
         colors[index + 1] = mixedColor.g
         colors[index + 2] = mixedColor.b
+
+        scales[i] = Math.random()
     }
     galaxyStarGeometry.setAttribute(
         'position', 
@@ -184,15 +187,68 @@ const createGalaxy = () => {
         'color', 
         new THREE.BufferAttribute(colors, 3)
     )
+
+    galaxyStarGeometry.setAttribute(
+        'aScale', 
+        new THREE.BufferAttribute(scales, 1)
+    )
     // Material of the galaxy stars
-    materialGalaxy = new THREE.PointsMaterial({
-        size: parameters.size,
-        sizeAttenuation: true,
+    materialGalaxy = new THREE.ShaderMaterial({
         depthWrite: false,
         blending: THREE.AdditiveBlending,
         map: stars,
         vertexColors: true,
-        map: stars
+        uniforms:
+        {
+            uTime: { value: 0 },
+            uSize: { value: 8 * renderer.getPixelRatio() }
+        },
+        vertexShader: `
+            uniform float uSize;
+            uniform float uTime;
+            attribute float aScale;
+            varying vec3 vColor;
+            void main()
+            {
+                /**
+                 * Position
+                */
+                 vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+
+                // Rotate
+                float angle = atan(modelPosition.x, modelPosition.z);
+                float distanceToCenter = length(modelPosition.xz);
+                float angleOffset = (1.0 / distanceToCenter) * uTime * 0.2;
+                angle += angleOffset;
+                modelPosition.x = cos(angle) * distanceToCenter;
+                modelPosition.z = sin(angle) * distanceToCenter;
+                vec4 viewPosition = viewMatrix * modelPosition;
+                vec4 projectedPosition = projectionMatrix * viewPosition;
+                gl_Position = projectedPosition;
+
+                /**
+                 * Size
+                 */
+                gl_PointSize = uSize * aScale;
+                gl_PointSize *= (1.0 / - viewPosition.z);
+
+                vColor = color;
+            }
+        `,
+        fragmentShader: `
+            varying vec3 vColor;
+            void main()
+            {
+                // Light point
+                float strength = distance(gl_PointCoord, vec2(0.5));
+                strength = 1.0 - strength;
+                strength = pow(strength, 2.0);
+            
+                // Final color
+                vec3 color = mix(vec3(0.0), vColor, strength);
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `
     })
     
         
@@ -201,7 +257,6 @@ const createGalaxy = () => {
         
 }
     
-    createGalaxy()
     gui.add(parameters, 'randomStars').min(1000).max(10000).step(1000).onFinishChange(createGalaxy)
     gui.add(parameters, 'size').min(0.001).max(0.1).step(0.001).onFinishChange(createGalaxy)
     gui.add(parameters, 'galaxyRadius').min(1).max(20).step(1).onFinishChange(createGalaxy)
@@ -248,6 +303,7 @@ const renderer = new THREE.WebGLRenderer({
 })
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+createGalaxy()
 
 // Animation
 const clock = new THREE.Clock()
@@ -255,6 +311,9 @@ const clock = new THREE.Clock()
 const tick = () =>
 {
     const elapsedTime = clock.getElapsedTime()
+
+    // Update material
+    materialGalaxy.uniforms.uTime.value = elapsedTime
 
     clouds.rotation.y = elapsedTime * 0.075
     earth.rotation.y = elapsedTime * 0.05
